@@ -1,51 +1,56 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
 import {
   NestFastifyApplication,
   FastifyAdapter,
-} from '@nestjs/platform-fastify';
-import secureSession from '@fastify/secure-session';
-import { ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+} from "@nestjs/platform-fastify";
+import secureSession from "@fastify/secure-session";
+import { ConfigService } from "@nestjs/config";
+import { ValidationPipe, VersioningType } from "@nestjs/common";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
-import metadata from './metadata';
+import metadata from "./metadata";
+import { Environment } from "@config";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({
-      trustProxy: process.env['NODE_ENV'] === 'production',
+      trustProxy: process.env["NODE_ENV"] === "production",
     }),
   );
 
   await app.register(secureSession, {
-    secret: 'averylogphrasebiggerthanthirtytwochars',
-    salt: 'mq9hDxBVDbspDR6n',
-    sessionName: 'session',
-    cookieName: 'auth-session',
+    secret: "averylogphrasebiggerthanthirtytwochars",
+    salt: "mq9hDxBVDbspDR6n",
+    sessionName: "session",
+    cookieName: "auth-session",
     cookie: {
-      path: '/',
+      path: "/",
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: "strict",
     },
   });
 
-  app.enableVersioning();
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: "1" });
   app.enableCors();
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
-  if (process.env['ENV'] === 'development') {
+  const config_service = app.get(ConfigService);
+  const env = config_service.get<Environment>("NODE_ENV");
+
+  if (env === "development") {
     const swagger_config = new DocumentBuilder()
-      .setTitle('Prigorod Taxi')
-      .setVersion('1.0')
+      .setTitle("Prigorod Taxi API")
+      .setVersion("1.0")
       .build();
 
     await SwaggerModule.loadPluginMetadata(metadata);
     const document = SwaggerModule.createDocument(app, swagger_config);
 
-    SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup("api", app, document);
   }
 
   await app.listen(3000);

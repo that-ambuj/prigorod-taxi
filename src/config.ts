@@ -1,10 +1,10 @@
-import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsNumber, IsString, validateSync } from 'class-validator';
+import { plainToInstance } from "class-transformer";
+import { IsEnum, IsNumber, IsString, validateSync } from "class-validator";
 
 export enum Environment {
-  Development = 'development',
-  Production = 'production',
-  Test = 'test',
+  Development = "development",
+  Production = "production",
+  Test = "test",
 }
 
 class EnvironmentVariables {
