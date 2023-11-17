@@ -20,8 +20,11 @@ export class SignUpDto {
   @IsOptional()
   name?: string;
 
-  city: string;
-  village: string;
+  @IsOptional()
+  city?: string;
+
+  @IsOptional()
+  village?: string;
 
   @ApiProperty({ enum: UserType, isArray: false })
   @IsEnum(UserType)
