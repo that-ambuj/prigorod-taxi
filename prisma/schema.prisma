@@ -17,8 +17,8 @@ model Customer {
   name         String?
   phone_number String  @unique
 
-  city    String
-  village String
+  city    String?
+  village String?
 
   otp_token CustomerOtpToken?
 
@@ -45,8 +45,8 @@ model Driver {
   name         String?
   phone_number String  @unique
 
-  city    String
-  village String
+  city    String?
+  village String?
 
   otp_token DriverOtpToken?
   car       Car?
