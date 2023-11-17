@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  // set to `prisma` when using PlanetScale database, otherwise set to `foreignKeys`
+  relationMode = "prisma"
+}
+
+model Customer {
+  id           String  @id @default(uuid())
+  name         String?
+  phone_number String  @unique
+
+  city    String
+  village String
+
+  otp_token CustomerOtpToken?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  trips Trip[]
+}
+
+model CustomerOtpToken {
+  id  String @id @default(uuid())
+  otp String @unique @db.Char(6)
+
+  customer    Customer @relation(fields: [customer_id], references: [id])
+  customer_id String   @unique
+
+  created_at DateTime @default(now())
+
+  @@index([otp])
+}
+
+model Driver {
+  id           String  @id @default(uuid())
+  name         String?
+  phone_number String  @unique
+
+  city    String
+  village String
+
+  otp_token DriverOtpToken?
+  car       Car?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  Trip       Trip[]
+}
+
+model DriverOtpToken {
+  id  String @id @default(uuid())
+  otp String @unique @db.Char(6)
+
+  driver    Driver @relation(fields: [driver_id], references: [id])
+  driver_id String @unique
+
+  created_at DateTime @default(now())
+
+  @@index([otp])
+}
+
+model Car {
+  id             String  @id @default(uuid())
+  license_number String  @unique
+  model          String?
+  brand          String?
+  color          String?
+
+  driver    Driver @relation(fields: [driver_id], references: [id])
+  driver_id String @unique
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Trip {
+  id String @id @default(uuid())
+
+  from_city      String
+  from_village   String
+  to_city        String
+  to_village     String
+  seat_price     Decimal @db.Decimal(10, 2)
+  total_seats    Int
+  reserved_seats Int     @default(0)
+
+  comment String?
+
+  driver    Driver @relation(fields: [driver_id], references: [id])
+  driver_id String
+
+  passengers Customer[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([driver_id])
+}
