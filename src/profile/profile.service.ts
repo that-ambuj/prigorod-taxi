@@ -4,7 +4,7 @@ import { ProfileUpdateDto } from "./dto/profile-update.dto";
 import { PrismaService } from "@app/prisma/prisma.service";
 
 type UserType = {
-  user_type: "customer" | "driver";
+  user_type: "CUSTOMER" | "DRIVER";
 };
 
 @Injectable()
@@ -18,12 +18,15 @@ export class ProfileService {
 
     user = await this.prisma.customer.findUnique({ where: { id } });
     if (user) {
-      return { ...user, user_type: "customer" };
+      return { ...user, user_type: "CUSTOMER" };
     }
 
-    user = await this.prisma.driver.findUnique({ where: { id } });
+    user = await this.prisma.driver.findUnique({
+      where: { id },
+      include: { car: true },
+    });
     if (user) {
-      return { ...user, user_type: "driver" };
+      return { ...user, user_type: "DRIVER" };
     }
 
     return null;
@@ -37,7 +40,7 @@ export class ProfileService {
     }
 
     const updated =
-      user.user_type == "customer"
+      user.user_type == "CUSTOMER"
         ? await this.updateCustomerById(user.id, data)
         : await this.updateDriverById(user.id, data);
 
@@ -65,6 +68,7 @@ export class ProfileService {
 
     return this.prisma.driver.update({
       where: { id },
+      include: { car: true },
       data: {
         name: data.name,
         village: data.village,

@@ -20,7 +20,7 @@ import {
   ChangeTripStatusDto,
   TripStatusAction,
 } from "./dto/change-trip-status.dto";
-import { ApiBody, ApiQuery, ApiTags } from "@nestjs/swagger";
+import { ApiQuery, ApiTags } from "@nestjs/swagger";
 
 @UseGuards(DriverGuard)
 @ApiTags("Driver Trips")
@@ -35,15 +35,7 @@ export class DriverController {
   ) {
     const driver = req["user"] as Driver;
 
-    const trips = await this.driverService.listTrips(page, driver.id);
-
-    return trips.map((t) => {
-      if (t.reserved_seats >= t.total_seats) {
-        t.status = "FILLED";
-      }
-
-      return t;
-    });
+    return this.driverService.listTrips(page, driver.id);
   }
 
   @Get("trips/:id")

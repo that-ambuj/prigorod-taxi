@@ -14,16 +14,18 @@ export class AuthService {
   async signInWithOtp(data: SignUpDto) {
     let user: Driver | Customer;
 
-    const { user_type, phone_number } = data;
+    const { user_type, ...rest } = data;
 
     if (user_type === "CUSTOMER") {
       user =
-        (await this.prisma.customer.findUnique({ where: { phone_number } })) ??
-        (await this.prisma.customer.create({ data }));
+        (await this.prisma.customer.findUnique({
+          where: { phone_number: rest.phone_number },
+        })) ?? (await this.prisma.customer.create({ data: rest }));
     } else {
       user =
-        (await this.prisma.driver.findUnique({ where: { phone_number } })) ??
-        (await this.prisma.driver.create({ data }));
+        (await this.prisma.driver.findUnique({
+          where: { phone_number: rest.phone_number },
+        })) ?? (await this.prisma.driver.create({ data: rest }));
     }
 
     return this.sendOtp(user.id, user_type);
