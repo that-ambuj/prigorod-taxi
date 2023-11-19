@@ -20,7 +20,6 @@ export class DriverService {
         driver: { include: { car: true } },
       },
       where: {
-        status: "PENDING",
         driver_id,
       },
     });

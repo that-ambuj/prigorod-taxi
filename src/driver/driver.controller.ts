@@ -76,12 +76,16 @@ export class DriverController {
     switch (data.action) {
       case TripStatusAction.MARK_CANCELLED:
         result = await this.driverService.cancelTrip(id, driver.id);
+        break;
       case TripStatusAction.MARK_FILLED:
         result = await this.driverService.markTripFilled(id, driver.id);
+        break;
       case TripStatusAction.MARK_DEPARTED:
         result = await this.driverService.markTripDeparted(id, driver.id);
+        break;
       case TripStatusAction.MARK_COMPLETED:
         result = await this.driverService.markTripCompleted(id, driver.id);
+        break;
     }
 
     if (!result)
