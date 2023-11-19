@@ -8,6 +8,8 @@ import { validate } from "./config";
 import { ProfileModule } from "./profile/profile.module";
 import { HealthModule } from "./health/health.module";
 import { AppController } from "./app.controller";
+import { DriverModule } from './driver/driver.module';
+import { CustomerModule } from './customer/customer.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { AppController } from "./app.controller";
     PrismaModule,
     AuthModule,
     ProfileModule,
+    DriverModule,
+    CustomerModule,
   ],
   controllers: [AppController],
   providers: [OtpService],
