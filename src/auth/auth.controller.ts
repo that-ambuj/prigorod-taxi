@@ -1,4 +1,10 @@
-import { Controller, Post, Body, Session } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Body,
+  Session,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import {
   ApiBadRequestResponse,
@@ -8,6 +14,7 @@ import {
 import { SignUpDto } from "./dto/signup.dto";
 import { VerificationDto } from "./dto/verification.dto";
 import type { Session as TSession } from "@fastify/secure-session";
+import { DeviceTokenDto } from "@app/firebase/dto/device-token.dto";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -35,5 +42,23 @@ export class AuthController {
     session.set("data", user.id);
 
     return { message: "OTP verified!", is_new };
+  }
+
+  @Post("deviceToken")
+  async setDeviceToken(
+    @Session() session: TSession,
+    @Body() tokenInfo: DeviceTokenDto,
+  ) {
+    const user_id = session.get("data");
+    if (!user_id) throw new UnauthorizedException("User not logged in");
+
+    const user = await this.authService.findUserById(user_id);
+    if (!user) throw new UnauthorizedException("User does not exist.");
+
+    return this.authService.setDeviceToken({
+      id: user.id,
+      user_type: user.user_type,
+      device_token: tokenInfo.registration_token,
+    });
   }
 }

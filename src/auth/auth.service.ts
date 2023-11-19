@@ -4,28 +4,32 @@ import { SignUpDto } from "./dto/signup.dto";
 import { Customer, Driver } from "@prisma/client";
 import { OtpService } from "@app/otp.service";
 
+type UserType = {
+  user_type: "CUSTOMER" | "DRIVER";
+};
+
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly db: PrismaService,
     private readonly otpService: OtpService,
   ) {}
 
-  async signInWithOtp(data: SignUpDto) {
+  public async signInWithOtp(data: SignUpDto) {
     let user: Driver | Customer;
 
     const { user_type, ...rest } = data;
 
     if (user_type === "CUSTOMER") {
       user =
-        (await this.prisma.customer.findUnique({
+        (await this.db.customer.findUnique({
           where: { phone_number: rest.phone_number },
-        })) ?? (await this.prisma.customer.create({ data: rest }));
+        })) ?? (await this.db.customer.create({ data: rest }));
     } else {
       user =
-        (await this.prisma.driver.findUnique({
+        (await this.db.driver.findUnique({
           where: { phone_number: rest.phone_number },
-        })) ?? (await this.prisma.driver.create({ data: rest }));
+        })) ?? (await this.db.driver.create({ data: rest }));
     }
 
     return this.sendOtp(user.id, user_type);
@@ -38,12 +42,12 @@ export class AuthService {
     const otp = this.otpService.generateOtp();
 
     if (user_type === "DRIVER") {
-      await this.prisma.driverOtpToken.deleteMany({
+      await this.db.driverOtpToken.deleteMany({
         where: { driver_id: user_id },
       });
 
       // TODO: send otp via SMS service provider like AWS SNS
-      const token = await this.prisma.driverOtpToken.create({
+      const token = await this.db.driverOtpToken.create({
         data: {
           driver_id: user_id,
           otp,
@@ -52,12 +56,12 @@ export class AuthService {
 
       return token.otp;
     } else {
-      await this.prisma.customerOtpToken.deleteMany({
+      await this.db.customerOtpToken.deleteMany({
         where: { customer_id: user_id },
       });
 
       // TODO: send otp via SMS service provider like AWS SNS
-      const token = await this.prisma.customerOtpToken.create({
+      const token = await this.db.customerOtpToken.create({
         data: {
           customer_id: user_id,
           otp,
@@ -68,7 +72,7 @@ export class AuthService {
     }
   }
 
-  async verifyOtp(otp: string): Promise<Driver | Customer> {
+  public async verifyOtp(otp: string): Promise<Driver | Customer> {
     const user =
       (await this.findCustomerByOtp(otp)) ?? (await this.findDriverByOtp(otp));
 
@@ -79,8 +83,48 @@ export class AuthService {
     return user;
   }
 
+  public async findUserById(
+    id: string,
+  ): Promise<(Driver & UserType) | (Customer & UserType) | null> {
+    let user: Driver | Customer;
+
+    user = await this.db.customer.findUnique({ where: { id } });
+    if (user) {
+      return { ...user, user_type: "CUSTOMER" };
+    }
+
+    user = await this.db.driver.findUnique({ where: { id } });
+    if (user) {
+      return { ...user, user_type: "DRIVER" };
+    }
+
+    return null;
+  }
+
+  public async setDeviceToken({
+    id,
+    user_type,
+    device_token,
+  }: {
+    id: string;
+    user_type: "DRIVER" | "CUSTOMER";
+    device_token: string;
+  }) {
+    if (user_type == "CUSTOMER") {
+      return this.db.customer.update({
+        where: { id },
+        data: { device_token },
+      });
+    } else {
+      return this.db.driver.update({
+        where: { id },
+        data: { device_token },
+      });
+    }
+  }
+
   private async findCustomerByOtp(otp: string) {
-    const token = await this.prisma.customerOtpToken.findFirst({
+    const token = await this.db.customerOtpToken.findFirst({
       where: { otp },
       orderBy: { created_at: "desc" },
     });
@@ -89,13 +133,13 @@ export class AuthService {
       return null;
     }
 
-    return this.prisma.customer.findUnique({
+    return this.db.customer.findUnique({
       where: { id: token.customer_id },
     });
   }
 
   private async findDriverByOtp(otp: string) {
-    const token = await this.prisma.driverOtpToken.findFirst({
+    const token = await this.db.driverOtpToken.findFirst({
       where: { otp },
       orderBy: { created_at: "desc" },
     });
@@ -104,7 +148,7 @@ export class AuthService {
       return null;
     }
 
-    return this.prisma.driver.findUnique({
+    return this.db.driver.findUnique({
       where: { id: token.driver_id },
     });
   }

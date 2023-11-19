@@ -11,6 +11,7 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 import metadata from "./metadata";
 import { Environment } from "@config";
+import { initializeApp } from "firebase-admin/app";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -32,6 +33,8 @@ async function bootstrap() {
       sameSite: "strict",
     },
   });
+
+  initializeApp();
 
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: "1" });
   app.enableCors();
