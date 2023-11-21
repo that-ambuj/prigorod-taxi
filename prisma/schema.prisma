@@ -88,9 +88,10 @@ model Trip {
 
   from           String
   to             String
-  seat_price     Decimal @db.Decimal(10, 2)
+  seat_price     Decimal  @db.Decimal(10, 2)
   total_seats    Int
-  reserved_seats Int     @default(0)
+  reserved_seats Int      @default(0)
+  departure_time DateTime
 
   status  TripStatus @default(PENDING)
   comment String?

@@ -1,9 +1,5 @@
 import { PrismaService } from "@app/prisma/prisma.service";
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PaginationDto } from "@shared/pagination.dto";
 import { CreateTripDto } from "./dto/create-trip.dto";
 import { Trip } from "@prisma/client";
@@ -93,7 +89,7 @@ export class DriverService {
 
     if (!trip) return null;
 
-    if (trip.status === "CANCELLED") {
+    if (trip.status !== "PENDING" && trip.status !== "FILLED") {
       throw new ForbiddenException(
         `Cannot mark a ${trip.status} trip as DEPARTED.`,
       );
@@ -115,7 +111,7 @@ export class DriverService {
 
     if (!trip) return null;
 
-    if (trip.status === "CANCELLED" || trip.status === "PENDING") {
+    if (trip.status !== "DEPARTED") {
       throw new ForbiddenException(
         `Cannot mark a ${trip.status} trip as COMPLETED.`,
       );
