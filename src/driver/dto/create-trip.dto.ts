@@ -3,16 +3,10 @@ import { Type } from "class-transformer";
 
 export class CreateTripDto {
   @IsNotEmpty()
-  from_city: string;
-
-  @IsOptional()
-  from_village?: string;
+  from: string;
 
   @IsNotEmpty()
-  to_city: string;
-
-  @IsOptional()
-  to_village?: string;
+  to: string;
 
   @IsInt()
   @Type(() => Number)
