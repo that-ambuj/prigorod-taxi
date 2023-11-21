@@ -27,10 +27,8 @@ export class CustomerService {
       where: {
         status: "PENDING",
         OR: [
-          { from_city: { contains: search_from?.toLowerCase() ?? "" } },
-          { from_village: { contains: search_from?.toLowerCase() ?? "" } },
-          { to_city: { contains: search_to?.toLowerCase() ?? "" } },
-          { to_village: { contains: search_to?.toLowerCase() ?? "" } },
+          { from: { contains: search_from?.toLowerCase() ?? "" } },
+          { to: { contains: search_to?.toLowerCase() ?? "" } },
         ],
       },
       take: page.limit,

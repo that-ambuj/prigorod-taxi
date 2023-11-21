@@ -86,7 +86,8 @@ model Car {
 model Trip {
   id String @id @default(uuid())
 
-  from_city      String
+  from           String
+  to             String
   seat_price     Decimal @db.Decimal(10, 2)
   total_seats    Int
   reserved_seats Int     @default(0)
