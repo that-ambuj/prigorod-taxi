@@ -3,26 +3,29 @@ import { Injectable } from "@nestjs/common";
 import { Trip } from "@prisma/client";
 import { getMessaging } from "firebase-admin/messaging";
 
-type NotificationPayload = {
-  event_type: "TRIP_DEPARTED" | "TRIP_CANCELLED" | "TRIP_COMPLETED";
-  ride?: Trip;
+export type NotificationPayload = {
+  event_type:
+    | "TRIP_DEPARTED"
+    | "TRIP_COMPLETED"
+    | "TRIP_CANCELLED"
+    | "PASSENGER_CANCELLED"
+    | "PASSENGER_BOOKED";
+  trip?: Trip;
+};
+
+export type NotifData = { user_id: string } & NotifDataWithoutUserId;
+
+export type NotifDataWithoutUserId = {
+  payload: NotificationPayload;
+  body: string;
+  title: string;
 };
 
 @Injectable()
-export class FirebaseService {
+export class NotificationService {
   constructor(private readonly db: PrismaService) {}
 
-  async sendNotification({
-    user_id,
-    payload,
-    body,
-    title,
-  }: {
-    user_id: string;
-    payload: NotificationPayload;
-    body: string;
-    title: string;
-  }) {
+  async sendNotification({ user_id, payload, body, title }: NotifData) {
     try {
       const user =
         (await this.db.customer.findUnique({ where: { id: user_id } })) ??

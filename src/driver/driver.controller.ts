@@ -15,18 +15,25 @@ import { DriverGuard } from "@app/guards/driver.guard";
 import { PaginationDto } from "@shared/pagination.dto";
 import { CreateTripDto } from "./dto/create-trip.dto";
 import { FastifyRequest } from "fastify";
-import { Driver, Trip } from "@prisma/client";
+import { Customer, Driver, Trip } from "@prisma/client";
 import {
   ChangeTripStatusDto,
   TripStatusAction,
 } from "./dto/change-trip-status.dto";
 import { ApiQuery, ApiTags } from "@nestjs/swagger";
+import {
+  NotifDataWithoutUserId,
+  NotificationService,
+} from "@app/firebase/notification.service";
 
 @UseGuards(DriverGuard)
 @ApiTags("Driver Trips")
 @Controller("driver")
 export class DriverController {
-  constructor(private readonly driverService: DriverService) {}
+  constructor(
+    private readonly driverService: DriverService,
+    private readonly notif: NotificationService,
+  ) {}
 
   @Get("trips")
   async fetchTripHistory(
@@ -71,26 +78,57 @@ export class DriverController {
   ) {
     const driver = req["user"] as Driver;
 
-    let result: Trip = undefined;
+    let trip: Trip & { passengers: Customer[] } = undefined;
+
+    let notif_data: NotifDataWithoutUserId = undefined;
 
     switch (data.action) {
       case TripStatusAction.MARK_CANCELLED:
-        result = await this.driverService.cancelTrip(id, driver.id);
+        trip = await this.driverService.cancelTrip(id, driver.id);
+
+        notif_data = {
+          payload: { event_type: "TRIP_CANCELLED", trip },
+          title: "Trip Cancelled",
+          body: `Your trip from ${trip.from} to ${trip.to} has been cancelled by the driver.`,
+        };
+
         break;
       case TripStatusAction.MARK_FILLED:
-        result = await this.driverService.markTripFilled(id, driver.id);
+        trip = await this.driverService.markTripFilled(id, driver.id);
         break;
       case TripStatusAction.MARK_DEPARTED:
-        result = await this.driverService.markTripDeparted(id, driver.id);
+        trip = await this.driverService.markTripDeparted(id, driver.id);
+
+        notif_data = {
+          payload: { event_type: "TRIP_DEPARTED", trip },
+          title: "Trip Departed!",
+          body: `Your trip from ${trip.from} to ${trip.to} has departed.`,
+        };
+
         break;
       case TripStatusAction.MARK_COMPLETED:
-        result = await this.driverService.markTripCompleted(id, driver.id);
+        trip = await this.driverService.markTripCompleted(id, driver.id);
+
+        notif_data = {
+          payload: { event_type: "TRIP_COMPLETED", trip },
+          title: "Trip Completed!",
+          body: `Your trip from ${trip.from} to ${trip.to} has been completed!`,
+        };
+
         break;
     }
 
-    if (!result)
+    if (!trip)
       throw new NotFoundException(`Trip with id ${id} does not exist.`);
 
-    return result;
+    if (notif_data) {
+      await Promise.all(
+        trip.passengers.map(async ({ id }) => {
+          await this.notif.sendNotification({ user_id: id, ...notif_data });
+        }),
+      );
+    }
+
+    return trip;
   }
 }

@@ -4,7 +4,6 @@ import {
   NotFoundException,
   Param,
   Post,
-  Put,
   Query,
   Req,
   UseGuards,
@@ -16,12 +15,16 @@ import { SearchDto } from "./dto/search.dto";
 import { PaginationDto } from "@shared/pagination.dto";
 import { ApiTags } from "@nestjs/swagger";
 import { Customer } from "@prisma/client";
+import { NotificationService } from "@app/firebase/notification.service";
 
 @ApiTags("Customer Trips")
 @UseGuards(CustomerGuard)
 @Controller("customer")
 export class CustomerController {
-  constructor(private readonly customerService: CustomerService) {}
+  constructor(
+    private readonly customerService: CustomerService,
+    private readonly notif: NotificationService,
+  ) {}
 
   @Get("trips")
   async searchTrips(@Query() query: SearchDto, @Query() page: PaginationDto) {
@@ -52,6 +55,13 @@ export class CustomerController {
       throw new NotFoundException(`Trip with id ${id} was not found.`);
     }
 
+    await this.notif.sendNotification({
+      user_id: updated_trip.driver_id,
+      payload: { event_type: "PASSENGER_BOOKED", trip: updated_trip },
+      title: "A passenger booked a trip!",
+      body: `${customer.name ?? "Someone"} just booked a trip with you!`,
+    });
+
     return updated_trip;
   }
 
@@ -64,6 +74,13 @@ export class CustomerController {
     if (!updated_trip) {
       throw new NotFoundException(`Trip with id ${id} was not found.`);
     }
+
+    await this.notif.sendNotification({
+      user_id: updated_trip.driver_id,
+      payload: { event_type: "PASSENGER_CANCELLED", trip: updated_trip },
+      title: "A Passenger cancelled a trip with you.",
+      body: `${customer.name ?? "Someone"} just cancelled a trip with you.`,
+    });
 
     return updated_trip;
   }

@@ -4,7 +4,10 @@ import { PaginationDto } from "@shared/pagination.dto";
 import { CreateTripDto } from "./dto/create-trip.dto";
 import { Trip } from "@prisma/client";
 
-const include = { driver: { include: { car: true }, passengers: true } };
+const include = {
+  driver: { include: { car: true } },
+  passengers: true,
+} as const;
 
 @Injectable()
 export class DriverService {
@@ -40,10 +43,7 @@ export class DriverService {
     });
   }
 
-  public async cancelTrip(
-    trip_id: string,
-    driver_id: string,
-  ): Promise<Trip | null> {
+  public async cancelTrip(trip_id: string, driver_id: string) {
     const trip = await this.db.trip.findUnique({
       where: { id: trip_id, driver_id },
     });
@@ -62,10 +62,7 @@ export class DriverService {
     });
   }
 
-  public async markTripFilled(
-    trip_id: string,
-    driver_id: string,
-  ): Promise<Trip | null> {
+  public async markTripFilled(trip_id: string, driver_id: string) {
     const trip = await this.db.trip.findUnique({
       where: { id: trip_id, driver_id },
     });
@@ -84,10 +81,7 @@ export class DriverService {
     });
   }
 
-  public async markTripDeparted(
-    trip_id: string,
-    driver_id: string,
-  ): Promise<Trip | null> {
+  public async markTripDeparted(trip_id: string, driver_id: string) {
     const trip = await this.db.trip.findUnique({
       where: { id: trip_id, driver_id },
     });
@@ -107,10 +101,7 @@ export class DriverService {
     });
   }
 
-  public async markTripCompleted(
-    trip_id: string,
-    driver_id: string,
-  ): Promise<Trip | null> {
+  public async markTripCompleted(trip_id: string, driver_id: string) {
     const trip = await this.db.trip.findUnique({
       where: { id: trip_id, driver_id },
     });
