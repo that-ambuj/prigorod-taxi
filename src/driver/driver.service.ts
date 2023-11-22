@@ -4,6 +4,8 @@ import { PaginationDto } from "@shared/pagination.dto";
 import { CreateTripDto } from "./dto/create-trip.dto";
 import { Trip } from "@prisma/client";
 
+const include = { driver: { include: { car: true }, passengers: true } };
+
 @Injectable()
 export class DriverService {
   constructor(private readonly db: PrismaService) {}
@@ -24,7 +26,7 @@ export class DriverService {
   public async getTripByDriverAndId(id: string, driver_id: string) {
     return this.db.trip.findUnique({
       where: { id, driver_id },
-      include: { driver: { include: { car: true } }, passengers: true },
+      include,
     });
   }
 
@@ -34,6 +36,7 @@ export class DriverService {
         ...trip,
         driver_id,
       },
+      include,
     });
   }
 
@@ -55,6 +58,7 @@ export class DriverService {
     return this.db.trip.update({
       where: { id: trip.id, driver_id },
       data: { status: "CANCELLED" },
+      include,
     });
   }
 
@@ -76,6 +80,7 @@ export class DriverService {
     return this.db.trip.update({
       where: { id: trip.id, driver_id },
       data: { status: "FILLED" },
+      include,
     });
   }
 
@@ -98,6 +103,7 @@ export class DriverService {
     return this.db.trip.update({
       where: { id: trip.id, driver_id },
       data: { status: "DEPARTED" },
+      include,
     });
   }
 
@@ -120,6 +126,7 @@ export class DriverService {
     return this.db.trip.update({
       where: { id: trip.id, driver_id },
       data: { status: "COMPLETED" },
+      include,
     });
   }
 }
