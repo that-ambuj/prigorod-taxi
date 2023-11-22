@@ -2,7 +2,7 @@ import { PrismaService } from "@app/prisma/prisma.service";
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PaginationDto } from "@shared/pagination.dto";
 import { SearchDto } from "./dto/search.dto";
-import { Trip } from "@prisma/client";
+import { Trip, TripStatus } from "@prisma/client";
 
 @Injectable()
 export class CustomerService {
@@ -88,9 +88,16 @@ export class CustomerService {
       );
     }
 
+    let new_status = trip.status as TripStatus;
+
+    if (trip.reserved_seats + 1 === trip.total_seats) {
+      new_status = "FILLED";
+    }
+
     return this.db.trip.update({
       where: { id: trip_id },
       data: {
+        status: new_status,
         passengers: { connect: { id: customer_id } },
         reserved_seats: { increment: 1 },
       },
@@ -127,6 +134,7 @@ export class CustomerService {
     return this.db.trip.update({
       where: { id: trip_id },
       data: {
+        status: "PENDING",
         passengers: { disconnect: { id: customer_id } },
         reserved_seats: { decrement: 1 },
       },
