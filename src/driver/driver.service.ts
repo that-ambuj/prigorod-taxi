@@ -2,7 +2,6 @@ import { PrismaService } from "@app/prisma/prisma.service";
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PaginationDto } from "@shared/pagination.dto";
 import { CreateTripDto } from "./dto/create-trip.dto";
-import { Trip } from "@prisma/client";
 
 const include = {
   driver: { include: { car: true } },
@@ -17,12 +16,9 @@ export class DriverService {
     return this.db.trip.findMany({
       take: page.limit,
       skip: page.skip(),
-      include: {
-        driver: { include: { car: true } },
-      },
-      where: {
-        driver_id,
-      },
+      include: { driver: { include: { car: true } } },
+      where: { driver_id },
+      orderBy: { created_at: "desc" },
     });
   }
 
@@ -69,14 +65,9 @@ export class DriverService {
 
     if (!trip) return null;
 
-    if (trip.status !== "PENDING" && trip.status !== "FILLED")
-      throw new ForbiddenException(
-        `Cannot mark a ${trip.status} trip as filled.`,
-      );
-
     return this.db.trip.update({
       where: { id: trip.id, driver_id },
-      data: { status: "FILLED" },
+      data: { is_full: true },
       include,
     });
   }
@@ -88,7 +79,7 @@ export class DriverService {
 
     if (!trip) return null;
 
-    if (trip.status !== "PENDING" && trip.status !== "FILLED") {
+    if (trip.status !== "PENDING") {
       throw new ForbiddenException(
         `Cannot mark a ${trip.status} trip as DEPARTED.`,
       );

@@ -16,6 +16,7 @@ import { PaginationDto } from "@shared/pagination.dto";
 import { ApiTags } from "@nestjs/swagger";
 import { Customer } from "@prisma/client";
 import { NotificationService } from "@app/firebase/notification.service";
+import { Quantity } from "./dto/quantity.dto";
 
 @ApiTags("Customer Trips")
 @UseGuards(CustomerGuard)
@@ -46,10 +47,18 @@ export class CustomerController {
   }
 
   @Post("trips/:id/book")
-  async bookTrip(@Param("id") id: string, @Req() req: FastifyRequest) {
+  async bookTrip(
+    @Param("id") id: string,
+    @Req() req: FastifyRequest,
+    @Query() data?: Quantity,
+  ) {
     const customer = req["user"] as Customer;
 
-    const updated_trip = await this.customerService.bookTrip(id, customer.id);
+    const updated_trip = await this.customerService.bookTrip(
+      id,
+      customer.id,
+      data.quantity,
+    );
 
     if (!updated_trip) {
       throw new NotFoundException(`Trip with id ${id} was not found.`);

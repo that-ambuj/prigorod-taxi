@@ -2,7 +2,7 @@ import { PrismaService } from "@app/prisma/prisma.service";
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PaginationDto } from "@shared/pagination.dto";
 import { SearchDto } from "./dto/search.dto";
-import { Trip, TripStatus } from "@prisma/client";
+import { Trip } from "@prisma/client";
 
 @Injectable()
 export class CustomerService {
@@ -12,27 +12,30 @@ export class CustomerService {
     page: PaginationDto,
     search?: SearchDto,
   ): Promise<Trip[]> {
-    if (!search.search_from && !search.search_to) {
+    const { search_from, search_to } = search;
+
+    if (!search_from && !search_to) {
       return this.db.trip.findMany({
-        where: { status: "PENDING" },
+        where: { status: "PENDING", is_full: false },
         take: page.limit,
         skip: page.skip(),
+        orderBy: { created_at: "asc" },
         include: { driver: { include: { car: true } } },
       });
     }
 
-    const { search_from, search_to } = search;
-
     return this.db.trip.findMany({
       where: {
         status: "PENDING",
-        OR: [
+        is_full: false,
+        AND: [
           { from: { contains: search_from?.toLowerCase() ?? "" } },
           { to: { contains: search_to?.toLowerCase() ?? "" } },
         ],
       },
       take: page.limit,
       skip: page.skip(),
+      orderBy: { created_at: "asc" },
       include: { driver: { include: { car: true } } },
     });
   }
@@ -45,6 +48,7 @@ export class CustomerService {
       where: { passengers: { some: { id: customer_id } } },
       take: page.limit,
       skip: page.skip(),
+      orderBy: { created_at: "desc" },
       include: { driver: { include: { car: true } } },
     });
   }
@@ -59,6 +63,7 @@ export class CustomerService {
   public async bookTrip(
     trip_id: string,
     customer_id: string,
+    quantity: number,
   ): Promise<Trip | null> {
     const already_booked = await this.db.trip.findUnique({
       where: { id: trip_id, passengers: { some: { id: customer_id } } },
@@ -88,18 +93,22 @@ export class CustomerService {
       );
     }
 
-    let new_status = trip.status as TripStatus;
+    const available_seats = trip.total_seats - trip.reserved_seats;
 
-    if (trip.reserved_seats + 1 === trip.total_seats) {
-      new_status = "FILLED";
+    if (quantity > available_seats) {
+      throw new ForbiddenException(
+        `Trip with id ${trip.id} can't be booked because there are not enough (${available_seats}) seats available.`,
+      );
     }
+
+    const is_full = trip.reserved_seats === trip.total_seats - quantity;
 
     return this.db.trip.update({
       where: { id: trip_id },
       data: {
-        status: new_status,
+        is_full,
         passengers: { connect: { id: customer_id } },
-        reserved_seats: { increment: 1 },
+        reserved_seats: { increment: quantity },
       },
       include: { driver: { include: { car: true } } },
     });
@@ -125,7 +134,7 @@ export class CustomerService {
 
     if (!trip) return null;
 
-    if (!(trip.status === "PENDING" || trip.status === "FILLED")) {
+    if (trip.status !== "PENDING") {
       throw new ForbiddenException(
         `Trip with id ${trip.id} can't be cancelled because it is ${trip.status}.`,
       );
@@ -134,7 +143,7 @@ export class CustomerService {
     return this.db.trip.update({
       where: { id: trip_id },
       data: {
-        status: "PENDING",
+        is_full: false,
         passengers: { disconnect: { id: customer_id } },
         reserved_seats: { decrement: 1 },
       },
