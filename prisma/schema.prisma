@@ -51,10 +51,10 @@ model Driver {
 
   otp_token DriverOtpToken?
   car       Car?
+  trips     Trip[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  Trip       Trip[]
 }
 
 model DriverOtpToken {
@@ -92,6 +92,7 @@ model Trip {
   total_seats    Int
   reserved_seats Int      @default(0)
   departure_time DateTime
+  is_full        Boolean  @default(false)
 
   status  TripStatus @default(PENDING)
   comment String?
@@ -109,7 +110,6 @@ model Trip {
 
 enum TripStatus {
   PENDING
-  FILLED
   DEPARTED
   COMPLETED
   CANCELLED
