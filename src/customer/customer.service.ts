@@ -49,7 +49,10 @@ export class CustomerService {
       take: page.limit,
       skip: page.skip(),
       orderBy: { created_at: "desc" },
-      include: { driver: { include: { car: true } }, tickets: true },
+      include: {
+        driver: { include: { car: true } },
+        tickets: { where: { customer_id } },
+      },
     });
   }
 
