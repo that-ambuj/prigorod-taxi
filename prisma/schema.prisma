@@ -112,7 +112,8 @@ model Ticket {
   trip      Trip     @relation(fields: [trip_id], references: [id])
   passenger Customer @relation(fields: [customer_id], references: [id])
 
-  quantity Int @default(1)
+  quantity     Int     @default(1)
+  is_cancelled Boolean @default(false)
 
   trip_id     String
   customer_id String
