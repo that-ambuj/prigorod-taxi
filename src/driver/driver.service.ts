@@ -5,8 +5,11 @@ import { CreateTripDto } from "./dto/create-trip.dto";
 
 const include = {
   driver: { include: { car: true } },
-  passengers: true,
-} as const;
+  tickets: {
+    include: { passenger: true },
+    where: { is_cancelled: false },
+  },
+};
 
 @Injectable()
 export class DriverService {

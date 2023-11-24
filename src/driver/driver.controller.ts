@@ -15,7 +15,7 @@ import { DriverGuard } from "@app/guards/driver.guard";
 import { PaginationDto } from "@shared/pagination.dto";
 import { CreateTripDto } from "./dto/create-trip.dto";
 import { FastifyRequest } from "fastify";
-import { Customer, Driver, Trip } from "@prisma/client";
+import { Driver, Ticket, Trip } from "@prisma/client";
 import {
   ChangeTripStatusDto,
   TripStatusAction,
@@ -78,7 +78,7 @@ export class DriverController {
   ) {
     const driver = req["user"] as Driver;
 
-    let trip: Trip & { passengers: Customer[] } = undefined;
+    let trip: Trip & { tickets: Ticket[] } = undefined;
 
     let notif_data: NotifDataWithoutUserId = undefined;
 
@@ -123,9 +123,14 @@ export class DriverController {
 
     if (notif_data) {
       await Promise.all(
-        trip.passengers.map(async ({ id }) => {
-          await this.notif.sendNotification({ user_id: id, ...notif_data });
-        }),
+        trip.tickets
+          .filter(({ is_cancelled }) => !is_cancelled)
+          .map(async ({ customer_id }) => {
+            await this.notif.sendNotification({
+              user_id: customer_id,
+              ...notif_data,
+            });
+          }),
       );
     }
 

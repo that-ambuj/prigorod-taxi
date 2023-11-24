@@ -45,11 +45,11 @@ export class CustomerService {
     customer_id: string,
   ): Promise<Trip[]> {
     return this.db.trip.findMany({
-      where: { passengers: { some: { id: customer_id } } },
+      where: { tickets: { some: { customer_id } } },
       take: page.limit,
       skip: page.skip(),
       orderBy: { created_at: "desc" },
-      include: { driver: { include: { car: true } } },
+      include: { driver: { include: { car: true } }, tickets: true },
     });
   }
 
@@ -66,7 +66,7 @@ export class CustomerService {
     quantity: number,
   ): Promise<Trip | null> {
     const already_booked = await this.db.trip.findUnique({
-      where: { id: trip_id, passengers: { some: { id: customer_id } } },
+      where: { id: trip_id, tickets: { some: { customer_id } } },
     });
 
     if (already_booked) {
@@ -107,10 +107,18 @@ export class CustomerService {
       where: { id: trip_id },
       data: {
         is_full,
-        passengers: { connect: { id: customer_id } },
+        tickets: {
+          create: {
+            customer_id,
+            quantity,
+          },
+        },
         reserved_seats: { increment: quantity },
       },
-      include: { driver: { include: { car: true } } },
+      include: {
+        driver: { include: { car: true } },
+        tickets: { select: { id: true, is_cancelled: true, quantity: true } },
+      },
     });
   }
 
@@ -118,11 +126,11 @@ export class CustomerService {
     trip_id: string,
     customer_id: string,
   ): Promise<Trip | null> {
-    const already_booked = await this.db.trip.findUnique({
-      where: { id: trip_id, passengers: { some: { id: customer_id } } },
+    const ticket = await this.db.ticket.findFirst({
+      where: { customer_id, trip_id },
     });
 
-    if (!already_booked) {
+    if (!ticket) {
       throw new ForbiddenException(
         `Trip with id ${trip_id} can't be cancelled because it is not already booked by the user.`,
       );
@@ -144,8 +152,10 @@ export class CustomerService {
       where: { id: trip_id },
       data: {
         is_full: false,
-        passengers: { disconnect: { id: customer_id } },
-        reserved_seats: { decrement: 1 },
+        tickets: {
+          update: { where: { id: ticket.id }, data: { is_cancelled: true } },
+        },
+        reserved_seats: { decrement: ticket.quantity },
       },
       include: { driver: { include: { car: true } } },
     });
