@@ -120,7 +120,7 @@ export class CustomerService {
       },
       include: {
         driver: { include: { car: true } },
-        tickets: { select: { id: true, is_cancelled: true, quantity: true } },
+        tickets: { where: { customer_id } },
       },
     });
   }
@@ -136,6 +136,12 @@ export class CustomerService {
     if (!ticket) {
       throw new ForbiddenException(
         `Trip with id ${trip_id} can't be cancelled because it is not already booked by the user.`,
+      );
+    }
+
+    if (ticket.is_cancelled) {
+      throw new ForbiddenException(
+        `Trip with id ${trip_id} can't be cancelled because it already cancelled by the user.`,
       );
     }
 
@@ -160,7 +166,10 @@ export class CustomerService {
         },
         reserved_seats: { decrement: ticket.quantity },
       },
-      include: { driver: { include: { car: true } } },
+      include: {
+        driver: { include: { car: true } },
+        tickets: { where: { customer_id } },
+      },
     });
   }
 }
