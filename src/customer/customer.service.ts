@@ -68,15 +68,19 @@ export class CustomerService {
     customer_id: string,
     quantity: number,
   ): Promise<Trip | null> {
-    const already_booked = await this.db.trip.findUnique({
-      where: { id: trip_id, tickets: { some: { customer_id } } },
+    const ticket = await this.db.ticket.findFirst({
+      where: { trip_id, customer_id },
     });
 
-    if (already_booked) {
+    if (!ticket.is_cancelled) {
       throw new ForbiddenException(
         `Trip with id ${trip_id} is already booked by the user.`,
       );
     }
+
+    await this.db.ticket.deleteMany({
+      where: { trip_id, customer_id },
+    });
 
     const trip = await this.db.trip.findUnique({
       where: { id: trip_id },
