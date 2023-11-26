@@ -12,11 +12,11 @@ export class CustomerService {
     page: PaginationDto,
     search?: SearchDto,
   ): Promise<Trip[]> {
-    const { search_from, search_to } = search;
+    const { search_from, search_to, show_filled } = search;
 
     if (!search_from && !search_to) {
       return this.db.trip.findMany({
-        where: { status: "PENDING", is_full: false },
+        where: { status: "PENDING", is_full: show_filled },
         take: page.limit,
         skip: page.skip(),
         orderBy: { created_at: "asc" },
@@ -27,7 +27,7 @@ export class CustomerService {
     return this.db.trip.findMany({
       where: {
         status: "PENDING",
-        is_full: false,
+        is_full: show_filled,
         AND: [
           { from: { contains: search_from?.toLowerCase() ?? "" } },
           { to: { contains: search_to?.toLowerCase() ?? "" } },
