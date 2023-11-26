@@ -96,6 +96,9 @@ export class DriverController {
       case TripStatusAction.MARK_FILLED:
         trip = await this.driverService.markTripFilled(id, driver.id);
         break;
+      case TripStatusAction.MARK_NOT_FILLED:
+        trip = await this.driverService.markTripNotFilled(id, driver.id);
+        break;
       case TripStatusAction.MARK_DEPARTED:
         trip = await this.driverService.markTripDeparted(id, driver.id);
 

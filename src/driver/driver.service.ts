@@ -75,6 +75,20 @@ export class DriverService {
     });
   }
 
+  public async markTripNotFilled(trip_id: string, driver_id: string) {
+    const trip = await this.db.trip.findUnique({
+      where: { id: trip_id, driver_id },
+    });
+
+    if (!trip) return null;
+
+    return this.db.trip.update({
+      where: { id: trip.id, driver_id },
+      data: { is_full: false },
+      include,
+    });
+  }
+
   public async markTripDeparted(trip_id: string, driver_id: string) {
     const trip = await this.db.trip.findUnique({
       where: { id: trip_id, driver_id },
