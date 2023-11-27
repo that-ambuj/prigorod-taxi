@@ -78,15 +78,17 @@ export class CustomerService {
       where: { trip_id, customer_id },
     });
 
-    if (!ticket.is_cancelled) {
-      throw new ForbiddenException(
-        `Trip with id ${trip_id} is already booked by the user.`,
-      );
+    if (ticket) {
+      if (!ticket.is_cancelled) {
+        throw new ForbiddenException(
+          `Trip with id ${trip_id} is already booked by the user.`,
+        );
+      } else {
+        await this.db.ticket.deleteMany({
+          where: { trip_id, customer_id },
+        });
+      }
     }
-
-    await this.db.ticket.deleteMany({
-      where: { trip_id, customer_id },
-    });
 
     const trip = await this.db.trip.findUnique({
       where: { id: trip_id },
