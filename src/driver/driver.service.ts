@@ -102,9 +102,18 @@ export class DriverService {
       );
     }
 
+    const total_price = trip.seat_price.toNumber() * trip.reserved_seats;
+
     return this.db.trip.update({
       where: { id: trip.id, driver_id },
-      data: { status: "DEPARTED" },
+      data: {
+        status: "DEPARTED",
+        driver: {
+          update: {
+            data: { earning: { increment: total_price } },
+          },
+        },
+      },
       include,
     });
   }
