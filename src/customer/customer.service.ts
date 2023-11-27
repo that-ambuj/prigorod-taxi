@@ -56,10 +56,16 @@ export class CustomerService {
     });
   }
 
-  public async getTripById(id: string): Promise<Trip | null> {
+  public async getTripById(
+    id: string,
+    customer_id: string,
+  ): Promise<Trip | null> {
     return this.db.trip.findUnique({
       where: { id },
-      include: { driver: { include: { car: true } } },
+      include: {
+        driver: { include: { car: true } },
+        tickets: { where: { customer_id } },
+      },
     });
   }
 

@@ -42,8 +42,9 @@ export class CustomerController {
   }
 
   @Get("trips/:id")
-  async fetchTripOne(@Param("id") id: string) {
-    return this.customerService.getTripById(id);
+  async fetchTripOne(@Param("id") id: string, @Req() req: FastifyRequest) {
+    const customer = req["user"] as Customer;
+    return this.customerService.getTripById(id, customer.id);
   }
 
   @Post("trips/:id/book")
