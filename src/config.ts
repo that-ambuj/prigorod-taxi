@@ -1,5 +1,11 @@
 import { plainToInstance } from "class-transformer";
-import { IsEnum, IsNumber, IsString, validateSync } from "class-validator";
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  validateSync,
+} from "class-validator";
 
 export enum Environment {
   Development = "development",
@@ -13,6 +19,10 @@ class EnvironmentVariables {
 
   @IsNumber()
   PORT: number = 3000;
+
+  @IsString()
+  @IsOptional()
+  ADDR: string = "127.0.0.1";
 
   @IsString()
   DATABASE_URL: string;
