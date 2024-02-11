@@ -42,23 +42,20 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
   const config_service = app.get(ConfigService);
-  const env = config_service.get<Environment>("NODE_ENV");
 
-  if (env === "development") {
-    const swagger_config = new DocumentBuilder()
-      .setTitle("Prigorod Taxi API")
-      .setVersion("1.0")
-      .build();
+  const swagger_config = new DocumentBuilder()
+    .setTitle("Prigorod Taxi API")
+    .setVersion("1.0")
+    .build();
 
-    await SwaggerModule.loadPluginMetadata(metadata);
-    const document = SwaggerModule.createDocument(app, swagger_config);
+  await SwaggerModule.loadPluginMetadata(metadata);
+  const document = SwaggerModule.createDocument(app, swagger_config);
 
-    SwaggerModule.setup("api", app, document);
-  }
+  SwaggerModule.setup("api", app, document);
 
   const port = config_service.get<number>("PORT");
   const addr = config_service.get<string>("ADDR");
 
   await app.listen(port, addr);
 }
-bootstrap();
+void bootstrap();
