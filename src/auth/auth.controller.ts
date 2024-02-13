@@ -61,4 +61,27 @@ export class AuthController {
       device_token: tokenInfo.registration_token,
     });
   }
+
+  @Post("toggleRole")
+  async toggleUserRole(@Session() session: TSession) {
+    const user_id = session.get("data");
+    if (!user_id) throw new UnauthorizedException("User not logged in");
+
+    const user = await this.authService.findUserById(user_id);
+    if (!user) throw new UnauthorizedException("User does not exist.");
+
+    const new_data =
+      user.user_type === "CUSTOMER"
+        ? await this.authService.findOrCreateDriver(user)
+        : await this.authService.findOrCreateCustomer(user);
+
+    return {
+      ...new_data,
+      is_new_driver:
+        // If the user already has a car or was a driver before the toggle,
+        // it means that the user is not a new driver. We'll take the inverse of that here.
+        // @ts-expect-error variable car may not be there
+        !(new_data?.car != undefined && user.user_type === "DRIVER"),
+    };
+  }
 }

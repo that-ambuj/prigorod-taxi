@@ -35,6 +35,42 @@ export class AuthService {
     return this.sendOtp(user.id, user_type);
   }
 
+  public async findOrCreateCustomer(data: Customer): Promise<Customer> {
+    return (
+      (await this.db.customer.findUnique({
+        where: { phone_number: data.phone_number },
+      })) ??
+      (await this.db.customer.create({
+        data: {
+          phone_number: data.phone_number,
+          device_token: data.device_token,
+          name: data.name,
+          city: data.city,
+          village: data.village,
+        },
+      }))
+    );
+  }
+
+  public async findOrCreateDriver(data: Customer): Promise<Driver> {
+    return (
+      (await this.db.driver.findUnique({
+        where: { phone_number: data.phone_number },
+        include: { car: true },
+      })) ??
+      (await this.db.driver.create({
+        data: {
+          phone_number: data.phone_number,
+          device_token: data.device_token,
+          name: data.name,
+          city: data.city,
+          village: data.village,
+        },
+        include: { car: true },
+      }))
+    );
+  }
+
   private async sendOtp(
     user_id: string,
     user_type: "DRIVER" | "CUSTOMER",
