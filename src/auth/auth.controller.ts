@@ -70,18 +70,20 @@ export class AuthController {
     const user = await this.authService.findUserById(user_id);
     if (!user) throw new UnauthorizedException("User does not exist.");
 
-    const new_data =
+    const alt_user =
       user.user_type === "CUSTOMER"
         ? await this.authService.findOrCreateDriver(user)
         : await this.authService.findOrCreateCustomer(user);
 
+    session.set("data", alt_user.id);
+
     return {
-      ...new_data,
+      ...alt_user,
       is_new_driver:
         // If the user already has a car or was a driver before the toggle,
         // it means that the user is not a new driver. We'll take the inverse of that here.
         // @ts-expect-error variable car may not be there
-        !(new_data?.car != undefined && user.user_type === "DRIVER"),
+        !(alt_user?.car != undefined || user.user_type === "DRIVER"),
     };
   }
 }
