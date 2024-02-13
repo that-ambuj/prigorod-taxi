@@ -85,7 +85,9 @@ model Car {
 model Trip {
   id String @id @default(uuid())
 
+  pickup_point   String?
   from           String
+  drop_point     String?
   to             String
   seat_price     Decimal  @db.Decimal(10, 2)
   total_seats    Int

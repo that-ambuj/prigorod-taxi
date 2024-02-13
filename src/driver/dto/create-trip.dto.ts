@@ -2,6 +2,12 @@ import { IsISO8601, IsInt, IsNotEmpty, IsOptional } from "class-validator";
 import { Type } from "class-transformer";
 
 export class CreateTripDto {
+  @IsOptional()
+  pickup_point?: string;
+
+  @IsOptional()
+  drop_point?: string;
+
   @IsNotEmpty()
   from: string;
 
