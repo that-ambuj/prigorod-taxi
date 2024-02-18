@@ -1,0 +1,13 @@
+version: '3.1'
+
+services:
+  db:
+    image: mysql
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DATABASE: "prigorod"
+      MYSQL_USER: "prigouser"
+      MYSQL_PASSWORD: "prigopass123"
+      MYSQL_RANDOM_ROOT_PASSWORD: "TRUE"
