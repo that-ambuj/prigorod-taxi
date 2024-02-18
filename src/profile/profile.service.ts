@@ -9,7 +9,7 @@ type UserType = {
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async findById(
     id: string,
@@ -65,6 +65,18 @@ export class ProfileService {
       color: data.car_color,
       license_number: data.car_number,
     };
+
+    if (!car_info.license_number) {
+      return this.prisma.driver.update({
+        where: { id },
+        include: { car: true },
+        data: {
+          name: data.name,
+          village: data.village,
+          city: data.city,
+        },
+      });
+    }
 
     return this.prisma.driver.update({
       where: { id },
