@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   validateSync,
 } from "class-validator";
 
@@ -29,6 +30,20 @@ class EnvironmentVariables {
 
   @IsString()
   APP_URL: string;
+
+  /**
+   * Base URL of the Whatsapp Messaging service
+   */
+  @IsUrl()
+  @IsString()
+  WA_API_URL: string;
+
+  /**
+   * JWT Bearer token to use for authenticating with API
+   * at WA_API_URL
+   */
+  @IsString()
+  WA_API_SECRET: string;
 }
 
 export function validate(config: Record<string, unknown>) {

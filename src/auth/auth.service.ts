@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { SignUpDto } from "./dto/signup.dto";
 import { Customer, Driver } from "@prisma/client";
 import { OtpService } from "@app/otp.service";
+import { WhatsappService } from "@app/whatsapp.service";
 
 type UserType = {
   user_type: "CUSTOMER" | "DRIVER";
@@ -13,7 +14,8 @@ export class AuthService {
   constructor(
     private readonly db: PrismaService,
     private readonly otpService: OtpService,
-  ) {}
+    private readonly wa: WhatsappService,
+  ) { }
 
   public async signInWithOtp(data: SignUpDto) {
     let user: Driver | Customer;
@@ -32,7 +34,7 @@ export class AuthService {
         })) ?? (await this.db.driver.create({ data: rest }));
     }
 
-    return this.sendOtp(user.id, user_type);
+    return this.sendOtp(user.id, user_type, user.phone_number);
   }
 
   public async findOrCreateCustomer(data: Customer): Promise<Customer> {
@@ -74,15 +76,17 @@ export class AuthService {
   private async sendOtp(
     user_id: string,
     user_type: "DRIVER" | "CUSTOMER",
+    phone: string,
   ): Promise<string> {
     const otp = this.otpService.generateOtp();
+
+    await this.wa.sendMessage(phone, `OTP: ${otp}`);
 
     if (user_type === "DRIVER") {
       await this.db.driverOtpToken.deleteMany({
         where: { driver_id: user_id },
       });
 
-      // TODO: send otp via SMS service provider like AWS SNS
       const token = await this.db.driverOtpToken.create({
         data: {
           driver_id: user_id,
@@ -96,7 +100,6 @@ export class AuthService {
         where: { customer_id: user_id },
       });
 
-      // TODO: send otp via SMS service provider like AWS SNS
       const token = await this.db.customerOtpToken.create({
         data: {
           customer_id: user_id,
