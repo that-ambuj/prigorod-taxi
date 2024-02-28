@@ -45,6 +45,8 @@ async function bootstrap() {
 
   const swagger_config = new DocumentBuilder()
     .setTitle("Prigorod Taxi API")
+    .addServer("/")
+    .addServer("/prigorod")
     .setVersion("1.0")
     .build();
 

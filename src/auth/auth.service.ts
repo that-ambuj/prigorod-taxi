@@ -3,7 +3,6 @@ import { PrismaService } from "../prisma/prisma.service";
 import { SignUpDto } from "./dto/signup.dto";
 import { Customer, Driver } from "@prisma/client";
 import { OtpService } from "@app/otp.service";
-import { WhatsappService } from "@app/whatsapp.service";
 
 type UserType = {
   user_type: "CUSTOMER" | "DRIVER";
@@ -14,8 +13,7 @@ export class AuthService {
   constructor(
     private readonly db: PrismaService,
     private readonly otpService: OtpService,
-    private readonly wa: WhatsappService,
-  ) { }
+  ) {}
 
   public async signInWithOtp(data: SignUpDto) {
     let user: Driver | Customer;
@@ -78,9 +76,7 @@ export class AuthService {
     user_type: "DRIVER" | "CUSTOMER",
     phone: string,
   ): Promise<string> {
-    const otp = this.otpService.generateOtp();
-
-    await this.wa.sendMessage(phone, `OTP: ${otp}`);
+    const otp = await this.otpService.sendOtp(phone);
 
     if (user_type === "DRIVER") {
       await this.db.driverOtpToken.deleteMany({
